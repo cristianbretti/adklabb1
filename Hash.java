@@ -3,7 +3,7 @@ class Hash {
 	private static String alphabet = "\tabcdefghijklmnopqrstuvwxyzåäö";
 
 	public static void main(String[] args) {
-		String inputString = "hejhej";
+		String inputString = "hejdå";
 		System.out.println(wordToIntHash(inputString));
 
 		for(int i = 0; i < 3; i++){
