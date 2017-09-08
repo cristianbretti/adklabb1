@@ -182,24 +182,28 @@ public class ConcordanceBuilder {
         }
 
         private void saveLinkedListToFile(){
-        	//try{
+            
+        	try{
         		byte[] largeBlock = new byte[blockSize * currentWordPtrs.size()];
-        		for(int i = 0; i < currentWordPtrs.size(); i++){
-        			for(int j = 0; j < blockSize; j++){
+        		for(byte[] bPos : currentWordPtrs){
+        			/*
+                    for(int j = 0; j < blockSize; j++){
         				largeBlock[(i*blockSize) + j] = currentWordPtrs.get(i)[j];
-        			}
+        			}*/
+                    korpusPositions.write(bPos);
         		}
         		//korpusPositions.write(largeBlock);
         		//korpusPositions.flush();
-        	//} catch (IOException e){
+        	} catch (IOException e){
 
-        	//}
+        	}
         }
 
         private void tryToReadFromKorpusWords(){
         	try{
         		RandomAccessFile raf = new RandomAccessFile("KorpusWords","r");
         		RandomAccessFile raf2 = new RandomAccessFile("KorpusPositions","r");
+                RandomAccessFile raf3 = new RandomAccessFile("korpus","r");
 
 	        	byte[] wordInBytes = new byte[blockSizeWords];
 
@@ -225,11 +229,15 @@ public class ConcordanceBuilder {
 	        	System.out.println(ptrForWord2);
 	        	System.out.println(firstPointerOfSecondWord);
 
+                raf3.seek(firstPointerOfSecondWord);
 
+                byte[] aa = new byte[2];
+                raf3.read(aa);
+                System.out.println("aa = " + new String(aa, "ISO-8859-1"));
 
 	        	raf.close();
         	} catch(IOException e){
-
+                //System.out.println(e.mess);
         	}
     		
         }
