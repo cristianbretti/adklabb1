@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class ConcordanceBuilder {
 
-        private String inputFile = "test.txt"; //var/tmp/Index.txt"; //"home/j/o/josthu/workspace/Lab1Konkordans/testtext"; // //"CorpusWords2.txt";
+        private String inputFile = "index"; //var/tmp/Index.txt"; //"home/j/o/josthu/workspace/Lab1Konkordans/testtext"; // //"CorpusWords2.txt";
         private long[] hashArray = new long[30*30*30];
         
         private long ptr = 0;
@@ -48,33 +48,22 @@ public class ConcordanceBuilder {
                     putPointerInArray(word,ptr);
                     ptr += word.getBytes().length + "\t".getBytes().length;
                     
-                    //System.out.println(word);
                     
-                    //System.out.println("pos1 :" + ptr);
                     
                     pos = io.getWord();
                     ptr += pos.getBytes().length + "\n".getBytes().length;
-                    
-                    //System.out.println(pos);
-                    
-                    // System.out.println("pos2: " + ptr);
-                    
-                    
-                    
+                   
                 }
-                RandomAccessFile raf = new RandomAccessFile(inputFile,"r");
-                raf.seek(18);
-                System.out.println(hashArray[1]);
-                System.out.println(hashArray[62]);
-
                 
-                System.out.println("read in raf: " + 
-                        new String(raf.readLine().getBytes(), "ISO-8859-1"));
+                Hash hashCreater = new Hash();
+
+            	int biggestHash = hashCreater.WordToIntHash("ööö");
+            	long biggestIndexPointer = hashArray[biggestHash];
+            	System.out.println("Biggest Pointer:" + biggestIndexPointer);
+                //saveArrayToFile();
                 
   
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(ConcordanceBuilder.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
                 Logger.getLogger(ConcordanceBuilder.class.getName()).log(Level.SEVERE, null, ex);
             }
 
@@ -83,36 +72,31 @@ public class ConcordanceBuilder {
         
         private void putPointerInArray(String w, long p) {
             
-            int hashValue = wordToIntHash(w);
+            Hash hashCreater = new Hash();
+
+            int hashValue = hashCreater.WordToIntHash(w);
+            if(hashValue == -1){
+
+            	System.out.println("-1!!!" + w);
+            }
             
             if (hashArray[hashValue] == -1) {
-                System.out.println("hit!!!");
                 hashArray[hashValue] = p;
             }
             
         }
-        
-        private int wordToIntHash(String inputString){
-            
-            if (inputString.length() == 1) {
-                return alphabet.indexOf(inputString.charAt(0));
-            } else if (inputString.length() == 2) {
-                return alphabet.indexOf(inputString.charAt(0))*30
-                        + alphabet.indexOf(inputString.charAt(1));
-            } else {
-                String firstThree = inputString.substring(0,3);
-                return alphabet.indexOf(firstThree.charAt(0))*900 
-			+ alphabet.indexOf(firstThree.charAt(1))*30
-			+ alphabet.indexOf(firstThree.charAt(2));
-            }   
-
-	}
         
         
         private void initializeArray() {
             for (int i=0; i<hashArray.length; i++) {
                 hashArray[i] = -1;
             }
+        }
+
+        private void saveArrayToFile(){
+        	for(int i = 0; i < hashArray.length; i++){
+
+        	}
         }
         
         
