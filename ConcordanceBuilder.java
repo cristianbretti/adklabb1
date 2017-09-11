@@ -61,7 +61,7 @@ public class ConcordanceBuilder {
                 while (io.hasMoreTokens()) {
                     
                     word = io.getWord();
-                    
+
                     //putPointerInArray(word,ptr);
                     //ptr += word.getBytes().length + "\t".getBytes().length;
 
@@ -71,14 +71,15 @@ public class ConcordanceBuilder {
                     putToIndexFiles(word, pos);
                    
                 }
-                
-                Hash hashCreater = new Hash();
+                savePrevWordToFile();
+            try{
+            	createHashFromKorpusWord();
 
-            	int biggestHash = hashCreater.WordToIntHash("ööö");
-            	long biggestIndexPointer = hashArray[biggestHash];
-            	System.out.println("Biggest Pointer:" + biggestIndexPointer);
+            } catch(Exception e){
+            	System.out.println("ERROR: " + e.getMessage());
+            }
 
-            	tryToReadFromKorpusWords();
+            	//tryToReadFromKorpusWords();
                 //saveArrayToFile();
                 
   
@@ -90,8 +91,7 @@ public class ConcordanceBuilder {
         
 
         private void putToIndexFiles(String w1, long korpusPtr) {
-        	//System.out.println("in the putToIndexFiles method");
-            if (w1.equals(prevWord)) {
+        	if (w1.equals(prevWord)) {
                 saveStringToLinkedList(korpusPtr);
 
             } else {
@@ -103,40 +103,40 @@ public class ConcordanceBuilder {
                     prevWord = w1;
                 } else {
 
-                    
-                    try{
-                    	// Save word and ptr to the KorpusWord file
+                	savePrevWordToFile();
+                	
+                    // Relocate the ptr in KorpusPositions file
+                    ptrInKorpusPositions += blockSize * currentWordPtrs.size();
 
-                    	byte[] wordByteArray = new byte[blockSizeWords];
-						wordByteArray = putPaddingOnString(prevWord, blockSizeWords);
+                    prevWord = w1;
 
-						byte[] positionByteArray = (ByteBuffer.allocate(blockSize)).putLong(ptrInKorpusPositions).array();
+                    saveLinkedListToFile();
 
-	                    korpusWords.write(wordByteArray);
-	                    korpusWords.write(positionByteArray);
+                    currentWordPtrs.clear(); // Clear the linked list
 
-
-	                    // Relocate the ptr in KorpusPositions file
-	                    ptrInKorpusPositions += blockSize * currentWordPtrs.size();
-
-	                    prevWord = w1;
-
-	                    saveLinkedListToFile();
-
-	                    currentWordPtrs.clear(); // Clear the linked list
-
-	                    saveStringToLinkedList(korpusPtr);
-
-                    } catch(UnsupportedEncodingException e){
-
-                    } catch(IOException e){
-
-                    }
+                    saveStringToLinkedList(korpusPtr);
                                         
                 }
 
             }
 
+        }
+
+        private void savePrevWordToFile(){
+        	try{
+        		// Save word and ptr to the KorpusWord file
+            	byte[] wordByteArray = new byte[blockSizeWords];
+				wordByteArray = putPaddingOnString(prevWord, blockSizeWords);
+
+				byte[] positionByteArray = (ByteBuffer.allocate(blockSize)).putLong(ptrInKorpusPositions).array();
+
+                korpusWords.write(wordByteArray);
+                korpusWords.write(positionByteArray);
+        	} catch(UnsupportedEncodingException e){
+        		System.out.println("fail when saving to file" + e.getMessage());
+            } catch(IOException e){
+            	System.out.println("fail when saving to file" + e.getMessage());
+            }
         }
 
         private void saveStringToLinkedList(long pointerAsString){
@@ -186,24 +186,44 @@ public class ConcordanceBuilder {
         	try{
         		byte[] largeBlock = new byte[blockSize * currentWordPtrs.size()];
         		for(byte[] bPos : currentWordPtrs){
-        			/*
-                    for(int j = 0; j < blockSize; j++){
-        				largeBlock[(i*blockSize) + j] = currentWordPtrs.get(i)[j];
-        			}*/
+        			
                     korpusPositions.write(bPos);
         		}
-        		//korpusPositions.write(largeBlock);
-        		//korpusPositions.flush();
         	} catch (IOException e){
 
         	}
         }
 
+        private void createHashFromKorpusWord() throws Exception{
+        	RandomAccessFile raf = new RandomAccessFile("KorpusWords","r");
+        	Hash hashGenerator = new Hash();
+
+        	System.out.println("Börjar läsa");
+
+        	
+        	while(raf.getFilePointer() < raf.length()){
+        		byte[] currentWordBytes = new byte[blockSizeWords];
+	        	raf.read(currentWordBytes);
+	        	String word = new String(currentWordBytes, "ISO-8859-1");
+	        	String trimmedWord = word.trim();
+
+	        	int hashValue = hashGenerator.WordToIntHash(trimmedWord);
+	        	long pointer = raf.readLong();
+
+	        	if(hashArray[hashValue] == -1){
+	        		hashArray[hashValue] = pointer;
+	        	}
+        	}
+        	saveArrayToFile();
+        }
+
+
+
         private void tryToReadFromKorpusWords(){
         	try{
         		RandomAccessFile raf = new RandomAccessFile("KorpusWords","r");
         		RandomAccessFile raf2 = new RandomAccessFile("KorpusPositions","r");
-                RandomAccessFile raf3 = new RandomAccessFile("korpus","r");
+                RandomAccessFile raf3 = new RandomAccessFile("../korpus","r");
 
 	        	byte[] wordInBytes = new byte[blockSizeWords];
 
@@ -237,7 +257,7 @@ public class ConcordanceBuilder {
 
 	        	raf.close();
         	} catch(IOException e){
-                //System.out.println(e.mess);
+                System.out.println(e.getMessage());
         	}
     		
         }
@@ -249,9 +269,16 @@ public class ConcordanceBuilder {
             }
         }
 
-        private void saveArrayToFile(){
+        private void saveArrayToFile() throws Exception{
+        	FileOutputStream hashFile = new FileOutputStream("HashValues");
+
         	for(int i = 0; i < hashArray.length; i++){
 
+        		byte[] hashKey = (ByteBuffer.allocate(4)).putInt(i).array();
+				byte[] position = (ByteBuffer.allocate(blockSize)).putLong(hashArray[i]).array();
+
+                hashFile.write(hashKey);
+                hashFile.write(position);
         	}
         }
         

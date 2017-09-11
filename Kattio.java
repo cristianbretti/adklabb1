@@ -39,7 +39,11 @@ import java.io.OutputStream;
 class Kattio extends PrintWriter {
     public Kattio(InputStream i) {
         super(new BufferedOutputStream(System.out));
-        r = new BufferedReader(new InputStreamReader(i));
+        try{
+            r = new BufferedReader(new InputStreamReader(i, "ISO-8859-1"));
+        }catch(Exception e){
+            System.out.println("error: " + e.getMessage());
+        }
     }
     public Kattio(InputStream i, OutputStream o) {
         super(new BufferedOutputStream(o));

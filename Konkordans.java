@@ -10,6 +10,8 @@ public static void  main(String[] args) {
 	Hash hashCreater = new Hash();
 	int hashValue = hashCreater.WordToIntHash(input);
 
+	long getPointerToKorpusPointers = getFirstPointer(hashValue);
+
 	System.out.println(hashValue);
 
 	//RandomAccessFile raf = new RandomAccessFile(inputFile,"r");
@@ -20,6 +22,10 @@ public static void  main(String[] args) {
     //System.out.println("read in raf: " + 
     //                  new String(raf.readLine().getBytes(), "ISO-8859-1"));
 	
+}
+
+private static long getFirstPointer(int hashValue){
+	int middleOfKorpusWord = 
 }
 
 }
