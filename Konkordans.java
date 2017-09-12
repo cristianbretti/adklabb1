@@ -25,7 +25,7 @@ public static void  main(String[] args) {
 
 		String input = s[0];
 
-		searchString = input.trim();
+		searchString = input.toLowerCase();
 		Hash hashCreater = new Hash();
 		int hashKey = hashCreater.WordToIntHash(searchString);
 
@@ -119,7 +119,6 @@ private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord)
 		String answer = scanner.next();
 
 		if(answer.equals("yes")){
-			System.out.println("OMG OK!");
 			printOutTheWords(pointerToCorrectWord, numberOfWords);
 		} else {
 			System.out.println("K BY");
