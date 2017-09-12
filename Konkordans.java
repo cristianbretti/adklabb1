@@ -3,35 +3,46 @@ import java.util.Scanner;
 
 public class Konkordans {
 
-
+private static long startTime;
+private static String searchString;
+private static int charactersBeforeAfter = 30;
 private static int blockSize = 8;
 private static int blockSizeWords = 50;
 private static RandomAccessFile korpusWords;
+private static RandomAccessFile korpusPositions;
+private static RandomAccessFile korpus;
+
 
 public static void  main(String[] args) {
 	try{
 
+		startTime = System.nanoTime();
 		korpusWords = new RandomAccessFile("KorpusWords", "r");
+		korpusPositions = new RandomAccessFile("KorpusPositions", "r");
+		korpus = new RandomAccessFile("../korpus", "r");
 
 		String[] s = args;
 
 		String input = s[0];
 
-		String trimmedInput = input.trim();
+		searchString = input.trim();
 		Hash hashCreater = new Hash();
-		int hashKey = hashCreater.WordToIntHash(trimmedInput);
-		System.out.println(hashKey);
+		int hashKey = hashCreater.WordToIntHash(searchString);
 
 		long pointerToFirstWordOfHash = getFirstPointer(hashKey);
 		if(pointerToFirstWordOfHash == -1){
-			System.out.println("No such word exists:");
+			wordDoesntExist();
 			return;
 		}
 
 		long pointerToNextWordOfHash = getNextPointer(hashKey);
 
 
-		long pointerToCorrectWord = searchForCorrectWord(pointerToFirstWordOfHash, pointerToNextWordOfHash, trimmedInput);
+		long pointerToCorrectWord = searchForCorrectWord(pointerToFirstWordOfHash, pointerToNextWordOfHash);
+		if(pointerToCorrectWord == -1){
+			wordDoesntExist();
+			return;
+		}
 		long pointerToNextWord = getNextWord();
 
 		nextPromt(pointerToCorrectWord, pointerToNextWord);
@@ -76,7 +87,7 @@ private static String getWordOfHashPointer(long pointerToKorpusWord) throws Exce
 
 }
 
-private static long searchForCorrectWord(long pointerToFirstWordOfHash, long pointerToNextWordOfHash, String searchString) throws Exception{
+private static long searchForCorrectWord(long pointerToFirstWordOfHash, long pointerToNextWordOfHash) throws Exception{
 	String currentWord = getWordOfHashPointer(pointerToFirstWordOfHash);
 	while(!currentWord.trim().equals(searchString) && korpusWords.getFilePointer() <= pointerToNextWordOfHash){
 		korpusWords.skipBytes(8);
@@ -94,11 +105,15 @@ private static long getNextWord() throws Exception{
 	return korpusWords.readLong();
 }
 
-private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord){
+private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord) throws Exception{
 	long numberOfWords = (pointerToNextWord - pointerToCorrectWord) / blockSize;
+	long estimatedTime = System.nanoTime() - startTime;
 	if(numberOfWords > 25){
 		Scanner scanner = new Scanner(System.in);
 
+		System.out.println("time in nano: " + estimatedTime);
+
+		System.out.println("time in milli?: " + (estimatedTime / 1000000));
 		System.out.println("There is: " + numberOfWords + " instances of the word, do you want to print them all? (yes/no)");
 
 		String answer = scanner.next();
@@ -108,14 +123,31 @@ private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord)
 			printOutTheWords(pointerToCorrectWord, numberOfWords);
 		} else {
 			System.out.println("K BY");
+			return;
 		}
 
 	}
 	printOutTheWords(pointerToCorrectWord, numberOfWords);
 }
 
-private static void printOutTheWords(long pointerToWord, long numberOfWords){
-	
+private static void printOutTheWords(long pointerToWord, long numberOfWords) throws Exception{
+	byte[] byteArrayForLine = new byte[(charactersBeforeAfter*2) + searchString.length()];
+	String line;
+	long positionInKorpus;
+	korpusPositions.seek(pointerToWord);
+
+	for(long i = 0; i < numberOfWords; i++){
+		positionInKorpus = korpusPositions.readLong();
+		positionInKorpus -= charactersBeforeAfter;
+		korpus.seek(positionInKorpus);
+		korpus.read(byteArrayForLine);
+		line = new String(byteArrayForLine, "ISO-8859-1");
+		System.out.println(line.replace("\n", " "));
+	}
+}
+
+private static void wordDoesntExist(){
+	System.out.println("Sorry.. this is not the word you're looking for");
 }
 
 }
