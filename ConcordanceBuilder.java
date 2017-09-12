@@ -211,7 +211,7 @@ public class ConcordanceBuilder {
 	        	long pointer = raf.readLong();
 
 	        	if(hashArray[hashValue] == -1){
-	        		hashArray[hashValue] = pointer;
+	        		hashArray[hashValue] = raf.getFilePointer() - (blockSizeWords + blockSize);
 	        	}
         	}
         	saveArrayToFile();
@@ -274,10 +274,7 @@ public class ConcordanceBuilder {
 
         	for(int i = 0; i < hashArray.length; i++){
 
-        		byte[] hashKey = (ByteBuffer.allocate(4)).putInt(i).array();
 				byte[] position = (ByteBuffer.allocate(blockSize)).putLong(hashArray[i]).array();
-
-                hashFile.write(hashKey);
                 hashFile.write(position);
         	}
         }
