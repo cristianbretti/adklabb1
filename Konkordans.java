@@ -19,7 +19,7 @@ public static void  main(String[] args) {
 		startTime = System.nanoTime();
 		korpusWords = new RandomAccessFile("KorpusWords", "r");
 		korpusPositions = new RandomAccessFile("KorpusPositions", "r");
-		korpus = new RandomAccessFile("../korpus", "r");
+		korpus = new RandomAccessFile("/info/adk17/labb1/korpus", "r");
 
 		String[] s = args;
 
@@ -32,19 +32,21 @@ public static void  main(String[] args) {
 		long pointerToFirstWordOfHash = getFirstPointer(hashKey);
 		if(pointerToFirstWordOfHash == -1){
 			wordDoesntExist();
+			System.out.println("Hash doesn't exist!");
 			return;
 		}
 
 		long pointerToNextWordOfHash = getNextPointer(hashKey);
 
-
 		long pointerToCorrectWord = searchForCorrectWord(pointerToFirstWordOfHash, pointerToNextWordOfHash);
+		System.out.println("test:"+ pointerToCorrectWord);		
 		if(pointerToCorrectWord == -1){
+			System.out.println("Here!");			
 			wordDoesntExist();
 			return;
 		}
 		long pointerToNextWord = getNextWord();
-
+		System.out.println("test2:"+ pointerToNextWord);
 		nextPromt(pointerToCorrectWord, pointerToNextWord);
 	} catch (Exception e){
 		System.out.println("errooor: " + e.getMessage());
@@ -71,7 +73,7 @@ private static long getNextPointer(int hashKey) throws Exception{
 		return -1;
 	}
 	long nextHashValue = raf.readLong();
-
+ 
 	while(nextHashValue == -1){
 		nextHashValue = raf.readLong();
 	}
@@ -89,10 +91,18 @@ private static String getWordOfHashPointer(long pointerToKorpusWord) throws Exce
 
 private static long searchForCorrectWord(long pointerToFirstWordOfHash, long pointerToNextWordOfHash) throws Exception{
 	String currentWord = getWordOfHashPointer(pointerToFirstWordOfHash);
-	while(!currentWord.trim().equals(searchString) && korpusWords.getFilePointer() <= pointerToNextWordOfHash){
+	
+	long endOfSearch = pointerToNextWordOfHash;
+
+	if (endOfSearch == -1) {
+		endOfSearch = korpusWords.length();
+	}
+
+	while(!currentWord.trim().equals(searchString) && korpusWords.getFilePointer() <= endOfSearch){
 		korpusWords.skipBytes(8);
 		currentWord = getWordOfHashPointer(korpusWords.getFilePointer());
 	}
+
 	if(currentWord.trim().equals(searchString)){
 		return korpusWords.readLong();
 	} else {
@@ -101,12 +111,17 @@ private static long searchForCorrectWord(long pointerToFirstWordOfHash, long poi
 }
 
 private static long getNextWord() throws Exception{
+	if(korpusWords.getFilePointer() == korpusWords.length()) {
+		System.out.println("här");
+		return korpusPositions.length();
+	}
 	korpusWords.skipBytes(blockSizeWords);
 	return korpusWords.readLong();
 }
 
 private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord) throws Exception{
 	long numberOfWords = (pointerToNextWord - pointerToCorrectWord) / blockSize;
+	System.out.println("numberOfWords: " + numberOfWords);
 	long estimatedTime = System.nanoTime() - startTime;
 	if(numberOfWords > 25){
 		Scanner scanner = new Scanner(System.in);
@@ -131,17 +146,30 @@ private static void nextPromt(long pointerToCorrectWord, long pointerToNextWord)
 
 private static void printOutTheWords(long pointerToWord, long numberOfWords) throws Exception{
 	byte[] byteArrayForLine = new byte[(charactersBeforeAfter*2) + searchString.length()];
+	
 	String line;
 	long positionInKorpus;
 	korpusPositions.seek(pointerToWord);
+	
 
 	for(long i = 0; i < numberOfWords; i++){
+		System.out.println("pointerToWord " + pointerToWord);
+		System.out.println("korpusPositions.getFilePointer " + korpusPositions.getFilePointer());
+		System.out.println("korpusPositions.length " + korpusPositions.length());
 		positionInKorpus = korpusPositions.readLong();
+		System.out.println("positionInKorpus " + positionInKorpus);
 		positionInKorpus -= charactersBeforeAfter;
+		if(positionInKorpus < 0) {
+			positionInKorpus = 0;
+		}
+		if(positionInKorpus + byteArrayForLine.length > korpus.length()) {
+			byteArrayForLine = new byte[(int) (korpus.length() - positionInKorpus)];		
+		}  
 		korpus.seek(positionInKorpus);
 		korpus.read(byteArrayForLine);
 		line = new String(byteArrayForLine, "ISO-8859-1");
 		System.out.println(line.replace("\n", " "));
+		byteArrayForLine = new byte[(charactersBeforeAfter*2) + searchString.length()];
 	}
 }
 

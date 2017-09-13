@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * @author Josephine
  */
 public class ConcordanceBuilder {
-        private String inputFile = "index"; //var/tmp/Index.txt"; //"home/j/o/josthu/workspace/Lab1Konkordans/testtext"; // //"CorpusWords2.txt";
+        private String inputFile = "/var/tmp/index";
         private long[] hashArray = new long[30*30*30];
         
         private long ptrInKorpusPositions = 0;
@@ -44,7 +44,7 @@ public class ConcordanceBuilder {
         private boolean firstTime = true;
 
 
-	private String alphabet = "\tabcdefghijklmnopqrstuvwxyzåäö";
+	private String alphabet = "\tabcdefghijklmnopqrstuvwxyzäåö";
 
         
         public ConcordanceBuilder() {
@@ -103,7 +103,7 @@ public class ConcordanceBuilder {
                     prevWord = w1;
                 } else {
 
-                	savePrevWordToFile();
+               		savePrevWordToFile();
                 	
                     // Relocate the ptr in KorpusPositions file
                     ptrInKorpusPositions += blockSize * currentWordPtrs.size();

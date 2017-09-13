@@ -1,6 +1,6 @@
 public class Hash {
 
-	private static String alphabet = "\tabcdefghijklmnopqrstuvwxyzåäö";
+	private static String alphabet = "\tabcdefghijklmnopqrstuvwxyzäåö";
 
 	public int WordToIntHash(String input){
 
