@@ -39,7 +39,7 @@ public class ConcordanceBuilder {
         private LinkedList<byte[]> currentWordPtrs = new LinkedList<byte[]>();
 
         FileOutputStream korpusWords;
-        BufferedOutputStream korpusPositions;
+        FileOutputStream korpusPositions;
 
         private boolean firstTime = true;
 
@@ -56,33 +56,26 @@ public class ConcordanceBuilder {
                 Kattio io = new Kattio(fis);
 
                 korpusWords = new FileOutputStream("KorpusWords");
-                korpusPositions = new BufferedOutputStream(new FileOutputStream("KorpusPositions"));
+                korpusPositions = new FileOutputStream("KorpusPositions");
                 
                 while (io.hasMoreTokens()) {
                     
                     word = io.getWord();
 
-                    //putPointerInArray(word,ptr);
-                    //ptr += word.getBytes().length + "\t".getBytes().length;
-
                     pos = io.getLong();
-                    //ptr += pos.getBytes().length + "\n".getBytes().length;
 
                     putToIndexFiles(word, pos);
                    
                 }
                 savePrevWordToFile();
+				saveLinkedListToFile();
             try{
             	createHashFromKorpusWord();
 
             } catch(Exception e){
             	System.out.println("ERROR: " + e.getMessage());
             }
-
-            	//tryToReadFromKorpusWords();
-                //saveArrayToFile();
                 
-  
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(ConcordanceBuilder.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -104,13 +97,11 @@ public class ConcordanceBuilder {
                 } else {
 
                		savePrevWordToFile();
-                	
+                    saveLinkedListToFile();
+
                     // Relocate the ptr in KorpusPositions file
                     ptrInKorpusPositions += blockSize * currentWordPtrs.size();
-
                     prevWord = w1;
-
-                    saveLinkedListToFile();
 
                     currentWordPtrs.clear(); // Clear the linked list
 
@@ -127,7 +118,9 @@ public class ConcordanceBuilder {
         		// Save word and ptr to the KorpusWord file
             	byte[] wordByteArray = new byte[blockSizeWords];
 				wordByteArray = putPaddingOnString(prevWord, blockSizeWords);
-
+				if(ptrInKorpusPositions == 100783528){
+					System.out.println("de är lika");				
+				}
 				byte[] positionByteArray = (ByteBuffer.allocate(blockSize)).putLong(ptrInKorpusPositions).array();
 
                 korpusWords.write(wordByteArray);
@@ -184,7 +177,6 @@ public class ConcordanceBuilder {
         private void saveLinkedListToFile(){
             
         	try{
-        		byte[] largeBlock = new byte[blockSize * currentWordPtrs.size()];
         		for(byte[] bPos : currentWordPtrs){
         			
                     korpusPositions.write(bPos);
@@ -197,9 +189,6 @@ public class ConcordanceBuilder {
         private void createHashFromKorpusWord() throws Exception{
         	RandomAccessFile raf = new RandomAccessFile("KorpusWords","r");
         	Hash hashGenerator = new Hash();
-
-        	System.out.println("Börjar läsa");
-
         	
         	while(raf.getFilePointer() < raf.length()){
         		byte[] currentWordBytes = new byte[blockSizeWords];
@@ -217,51 +206,6 @@ public class ConcordanceBuilder {
         	saveArrayToFile();
         }
 
-
-
-        private void tryToReadFromKorpusWords(){
-        	try{
-        		RandomAccessFile raf = new RandomAccessFile("KorpusWords","r");
-        		RandomAccessFile raf2 = new RandomAccessFile("KorpusPositions","r");
-                RandomAccessFile raf3 = new RandomAccessFile("../korpus","r");
-
-	        	byte[] wordInBytes = new byte[blockSizeWords];
-
-	        	raf.read(wordInBytes);
-	        	//System.out.println("pointer is:" + raf.getFilePointer());
-	        	long ptrForWord = raf.readLong();
-	        	//System.out.println("pointer is now :" + raf.getFilePointer());
-
-
-	        	System.out.println(new String(wordInBytes, "ISO-8859-1"));
-	        	System.out.println(ptrForWord);
-
-
-	        	byte[] wordInBytes2 = new byte[blockSizeWords];
-	        	raf.read(wordInBytes2);
-	        	//System.out.println("pointer is:" + raf.getFilePointer());
-	        	long ptrForWord2 = raf.readLong();
-	        	//System.out.println("pointer is now :" + raf.getFilePointer());
-	        	raf2.seek(ptrForWord2);
-	        	long firstPointerOfSecondWord = raf2.readLong();
-
-	        	System.out.println(new String(wordInBytes2, "ISO-8859-1"));
-	        	System.out.println(ptrForWord2);
-	        	System.out.println(firstPointerOfSecondWord);
-
-                raf3.seek(firstPointerOfSecondWord);
-
-                byte[] aa = new byte[2];
-                raf3.read(aa);
-                System.out.println("aa = " + new String(aa, "ISO-8859-1"));
-
-	        	raf.close();
-        	} catch(IOException e){
-                System.out.println(e.getMessage());
-        	}
-    		
-        }
-        
         
         private void initializeArray() {
             for (int i=0; i<hashArray.length; i++) {
