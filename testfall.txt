@@ -1,0 +1,7 @@
+och - stort ord
+för - första ordet
+regering - sista ordet
+ööö - sista unika 3bokstavskombinationen
+öööh - sista ordet i index
+a - förstsa ordet i index
+
